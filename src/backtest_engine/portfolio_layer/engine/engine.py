@@ -543,8 +543,9 @@ class PortfolioBacktestEngine:
                 break
 
             current_date = all_dates[i]
-            is_session_active = self._is_session_active(
-                ts,
+            ts_dt = pd.Timestamp(ts).to_pydatetime()
+            session_ok = self._is_session_active(
+                ts_dt,
                 trade_start_time=trade_start_time,
                 trade_end_time=trade_end_time,
             )
@@ -557,7 +558,8 @@ class PortfolioBacktestEngine:
                 if df is None or ts not in df.index:
                     still_pending.append((slot_id, symbol, side, qty, reason))
                     continue
-                if "RISK" not in reason and reason != "EOD_CLOSE" and not is_session_active:
+                if "RISK" not in reason and reason != "EOD_CLOSE" and not session_ok:
+                    still_pending.append((slot_id, symbol, side, qty, reason))
                     continue
                 bar = df.loc[ts]
                 self._last_bars[(slot_id, symbol)] = bar  # keep cache current
@@ -613,7 +615,7 @@ class PortfolioBacktestEngine:
                 for (sid, sym), df in self._data_map.items()
                 if ts in df.index
             }
-            signals = runner.collect_signals(bar_map, ts) if is_session_active else []
+            signals = runner.collect_signals(bar_map, ts) if session_ok else []
 
             # ── G. Compute target positions via vol-targeting ────────────────────
             if signals:
@@ -648,7 +650,7 @@ class PortfolioBacktestEngine:
             pending_orders.extend(orders)
 
             # ── I. Time-based forced EOD close ────────────────────────────────────
-            if self._should_force_eod_close(ts, current_date, eod_close_time):
+            if self._should_force_eod_close(ts_dt, current_date, eod_close_time):
                 # 1. Execute outstanding pending orders at market-on-close
                 still_pending = []
                 for (slot_id, symbol, side, qty, reason) in pending_orders:
@@ -719,28 +721,6 @@ class PortfolioBacktestEngine:
         report    = analytics.get_full_report_str(metrics, all_trades)
         print(report)
 
-        def _optional_int(value: Any) -> Optional[int]:
-            """Safely coerces optional numeric config values to int."""
-            if value is None:
-                return None
-            try:
-                if pd.isna(value):
-                    return None
-            except Exception:
-                pass
-            return int(value)
-
-        def _optional_float(value: Any) -> Optional[float]:
-            """Safely coerces optional numeric config values to float."""
-            if value is None:
-                return None
-            try:
-                if pd.isna(value):
-                    return None
-            except Exception:
-                pass
-            return float(value)
-
         save_portfolio_results(
             history=history,
             exposure_df=self.book.get_exposure_df(),
@@ -755,15 +735,6 @@ class PortfolioBacktestEngine:
             data_map=self._data_map,
             slot_weights={
                 i: slot.weight for i, slot in enumerate(self.config.slots)
-            },
-            slot_vol_params={
-                i: {
-                    "regime_window": _optional_int(slot.params.get("vol_regime_window")),
-                    "history_window": _optional_int(slot.params.get("vol_history_window")),
-                    "vol_min_pct": _optional_float(slot.params.get("vol_min_pct")),
-                    "vol_max_pct": _optional_float(slot.params.get("vol_max_pct")),
-                }
-                for i, slot in enumerate(self.config.slots)
             },
             instrument_specs=self.settings.instrument_specs,
             output_dir=output_dir,
