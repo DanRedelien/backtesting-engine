@@ -11,7 +11,7 @@ No look-ahead bias contract:
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import date, datetime, time
 from typing import Dict, List, Optional, Type
 
 import pandas as pd
@@ -21,6 +21,7 @@ from .execution import ExecutionHandler, Fill, Order, Trade
 from .analytics import PerformanceMetrics, save_backtest_results
 from .settings import BacktestSettings
 from .spread_model import compute_spread_ticks
+from .time_controls import is_session_active, parse_hhmm
 from src.data.data_lake import DataLake
 from src.data.bar_builder import BarBuilder
 from .fast_bar import FastBar
@@ -68,6 +69,7 @@ class BacktestEngine:
         self._peak_equity: float = self.settings.initial_capital
         self.trading_halted_today: bool = False
         self.trading_halted_permanently: bool = False
+        self._eod_closed_dates: set[date] = set()
 
     # ── Risk management ────────────────────────────────────────────────────────
 
@@ -195,6 +197,43 @@ class BacktestEngine:
             vol_baseline_lookback=self.settings.spread_vol_baseline_lookback,
         )
 
+    def _is_session_active(
+        self,
+        timestamp: datetime,
+        trade_start_time: Optional[time],
+        trade_end_time: Optional[time],
+    ) -> bool:
+        """
+        Returns True if new strategy signals are allowed at this timestamp.
+
+        Behaviour:
+            - If use_trading_hours=False, session is always active.
+            - If both trade_start_time and trade_end_time are None, session is always active.
+            - If only one boundary is set, treats the other side as open-ended.
+            - If start > end, treats the session as overnight wrapping midnight.
+        """
+        return is_session_active(
+            timestamp=timestamp,
+            use_trading_hours=self.settings.use_trading_hours,
+            trade_start_time=trade_start_time,
+            trade_end_time=trade_end_time,
+        )
+
+    def _should_force_eod_close(
+        self,
+        timestamp: datetime,
+        current_date: date,
+        eod_close_time: Optional[time],
+    ) -> bool:
+        """
+        Returns True exactly once per day when EOD close time is reached.
+        """
+        if eod_close_time is None:
+            return False
+        if current_date in self._eod_closed_dates:
+            return False
+        return timestamp.time() >= eod_close_time
+
     # ── Main event loop ────────────────────────────────────────────────────────
 
     def run(
@@ -263,6 +302,10 @@ class BacktestEngine:
         self._equity_at_day_start = self.settings.initial_capital
         self._peak_equity = self.settings.initial_capital
         self._last_date = None
+        self._eod_closed_dates.clear()
+        trade_start_time = parse_hhmm(self.settings.trade_start_time, "trade_start_time")
+        trade_end_time = parse_hhmm(self.settings.trade_end_time, "trade_end_time")
+        eod_close_time = parse_hhmm(self.settings.eod_close_time, "eod_close_time")
 
         pending_orders: List[Order] = []
         print("[Engine] Starting event loop...")
@@ -306,12 +349,16 @@ class BacktestEngine:
             # Compute spread ticks from history available at this bar (no-lookahead).
             spread_ticks = self._effective_spread_ticks(i, closes)
 
+            is_session_active = self._is_session_active(
+                timestamp,
+                trade_start_time=trade_start_time,
+                trade_end_time=trade_end_time,
+            )
+
             risk_orders = [o for o in pending_orders if "RISK" in o.reason]
-            normal_orders = [
-                o for o in pending_orders if "RISK" not in o.reason
-            ]
+            normal_orders = [o for o in pending_orders if "RISK" not in o.reason]
             orders_to_execute = risk_orders
-            if not self.trading_halted_today:
+            if not self.trading_halted_today and is_session_active:
                 orders_to_execute += normal_orders
 
             for order in orders_to_execute:
@@ -339,25 +386,35 @@ class BacktestEngine:
                 continue
 
             # E. Strategy logic (signal at close of bar t → order fills at open of bar t+1)
-            new_orders = self.strategy.on_bar(bar)
-            if new_orders:
-                pending_orders.extend(new_orders)
+            if is_session_active:
+                new_orders = self.strategy.on_bar(bar)
+                if new_orders:
+                    pending_orders.extend(new_orders)
 
-            # F. End-of-day forced close (if enabled)
-            is_last_bar = i == data_len - 1
-            is_eod = is_last_bar or dates[i + 1] != current_date
-
-            # Force-close open positions at EOD close time if configured
-            eod_close = self.settings.eod_close_time
-            if is_eod and eod_close:
-                liq = self._liquidate_all(timestamp, reason="EOD_CLOSE")
-                for order in liq:
+            # F. Time-based forced EOD close
+            if self._should_force_eod_close(timestamp, current_date, eod_close_time):
+                for order in pending_orders:
                     fill = self.execution.execute_order(
-                        order, bar, execute_at_close=True,
+                        order,
+                        bar,
+                        execute_at_close=True,
                         effective_spread_ticks=spread_ticks,
                     )
                     if fill:
                         self.portfolio.update(fill, current_prices)
+                pending_orders = []
+
+                liq = self._liquidate_all(timestamp, reason="EOD_CLOSE")
+                for order in liq:
+                    fill = self.execution.execute_order(
+                        order,
+                        bar,
+                        execute_at_close=True,
+                        effective_spread_ticks=spread_ticks,
+                    )
+                    if fill:
+                        self.portfolio.update(fill, current_prices)
+                self._eod_closed_dates.add(current_date)
 
             self.portfolio.record_snapshot(timestamp)
 

@@ -59,6 +59,22 @@ class MockDrawdownStrategy(BaseStrategy):
         return []
 
 
+class SessionAwareEntryStrategy(BaseStrategy):
+    """Enters once on the first eligible strategy callback and then holds."""
+
+    def __init__(self, engine) -> None:
+        super().__init__(engine)
+        self.calls = 0
+        self.entered = False
+
+    def on_bar(self, bar) -> list:
+        self.calls += 1
+        if not self.entered:
+            self.entered = True
+            return [Order(symbol=self.engine.settings.default_symbol, quantity=1, side="BUY")]
+        return []
+
+
 def test_no_leakage_execution_timing():
     """
     Ensures that a signal emitted at bar T executes at the Open of bar T+1.
@@ -150,3 +166,47 @@ def test_circuit_breaker_max_drawdown():
     # Let's verify we closed out our position.
     final_positions = engine.portfolio.positions
     assert sum(abs(v) for v in final_positions.values()) == 0, "Positions were not liquidated after halt!"
+
+
+def test_trading_window_and_eod_close_enforced() -> None:
+    """
+    Ensures session bounds gate strategy callbacks and EOD closes open positions.
+    """
+    timestamps = [
+        datetime(2025, 1, 1, 9, 0),
+        datetime(2025, 1, 1, 9, 30),
+        datetime(2025, 1, 1, 10, 0),
+        datetime(2025, 1, 1, 10, 30),
+    ]
+    data = pd.DataFrame(
+        {
+            "open": [100, 101, 102, 103],
+            "high": [100, 101, 102, 103],
+            "low": [100, 101, 102, 103],
+            "close": [100, 101, 102, 103],
+            "volume": [1, 1, 1, 1],
+        },
+        index=timestamps,
+    )
+
+    settings = BacktestSettings(
+        commission_rate=0.0,
+        spread_ticks=0,
+        initial_capital=10_000.0,
+        use_trading_hours=True,
+        trade_start_time="09:30",
+        trade_end_time="10:00",
+        eod_close_time="10:30",
+    )
+    settings.default_symbol = "NQ"
+    settings.instrument_specs = {"NQ": {"tick_size": 1.0, "multiplier": 1.0}}
+
+    engine = BacktestEngine(settings=settings, data=data)
+    engine.run(SessionAwareEntryStrategy)
+
+    assert isinstance(engine.strategy, SessionAwareEntryStrategy)
+    assert engine.strategy.calls == 2, "Strategy should run only inside [09:30, 10:00]."
+    assert engine.portfolio.positions.get("NQ", 0.0) == 0.0, "Position must be flat after EOD close."
+    assert any(t.exit_reason == "EOD_CLOSE" for t in engine.execution.trades), (
+        "Expected at least one trade closed by EOD logic."
+    )

@@ -14,7 +14,7 @@ No-lookahead contract (same as BacktestEngine):
 from __future__ import annotations
 
 import math
-from datetime import date, datetime
+from datetime import date, datetime, time
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Type
 
@@ -23,6 +23,7 @@ import pandas as pd
 from src.backtest_engine.settings import BacktestSettings
 from src.backtest_engine.execution import Order
 from src.backtest_engine.spread_model import compute_spread_ticks
+from src.backtest_engine.time_controls import is_session_active, parse_hhmm
 from src.data.data_lake import DataLake
 
 from ..domain.contracts import PortfolioConfig
@@ -119,6 +120,7 @@ class PortfolioBacktestEngine:
         self._peak_equity: float = config.initial_capital
         self.trading_halted_today: bool = False
         self.trading_halted_permanently: bool = False
+        self._eod_closed_dates: set[date] = set()
 
     # ── Risk management ────────────────────────────────────────────────────────
 
@@ -451,6 +453,37 @@ class PortfolioBacktestEngine:
                 effective_spread_ticks=spread_ticks,
             )
 
+    def _is_session_active(
+        self,
+        timestamp: datetime,
+        trade_start_time: Optional[time],
+        trade_end_time: Optional[time],
+    ) -> bool:
+        """
+        Returns True if new strategy signals are allowed at this timestamp.
+        """
+        return is_session_active(
+            timestamp=timestamp,
+            use_trading_hours=self.settings.use_trading_hours,
+            trade_start_time=trade_start_time,
+            trade_end_time=trade_end_time,
+        )
+
+    def _should_force_eod_close(
+        self,
+        timestamp: datetime,
+        current_date: date,
+        eod_close_time: Optional[time],
+    ) -> bool:
+        """
+        Returns True exactly once per day when EOD close time is reached.
+        """
+        if eod_close_time is None:
+            return False
+        if current_date in self._eod_closed_dates:
+            return False
+        return timestamp.time() >= eod_close_time
+
     # ── Main event loop ────────────────────────────────────────────────────────
 
     def run(self) -> None:
@@ -490,6 +523,10 @@ class PortfolioBacktestEngine:
 
         runner = StrategyRunner(self.config, self._data_map, self.settings)
         self.scheduler.reset()
+        self._eod_closed_dates.clear()
+        trade_start_time = parse_hhmm(self.settings.trade_start_time, "trade_start_time")
+        trade_end_time = parse_hhmm(self.settings.trade_end_time, "trade_end_time")
+        eod_close_time = parse_hhmm(self.settings.eod_close_time, "eod_close_time")
 
         pending_orders: List[Tuple[int, str, str, float, str]] = []
         current_targets: Dict[Tuple[int, str], TargetPosition] = {}
@@ -506,7 +543,11 @@ class PortfolioBacktestEngine:
                 break
 
             current_date = all_dates[i]
-            next_date    = all_dates[i + 1] if i + 1 < data_len else None
+            is_session_active = self._is_session_active(
+                ts,
+                trade_start_time=trade_start_time,
+                trade_end_time=trade_end_time,
+            )
 
             # ── A. Fill pending orders (carry forward through gap bars) ──────────
             # Spread ticks are computed per symbol from history available at ts.
@@ -515,6 +556,8 @@ class PortfolioBacktestEngine:
                 df = self._data_map.get((slot_id, symbol))
                 if df is None or ts not in df.index:
                     still_pending.append((slot_id, symbol, side, qty, reason))
+                    continue
+                if "RISK" not in reason and reason != "EOD_CLOSE" and not is_session_active:
                     continue
                 bar = df.loc[ts]
                 self._last_bars[(slot_id, symbol)] = bar  # keep cache current
@@ -570,7 +613,7 @@ class PortfolioBacktestEngine:
                 for (sid, sym), df in self._data_map.items()
                 if ts in df.index
             }
-            signals = runner.collect_signals(bar_map, ts)
+            signals = runner.collect_signals(bar_map, ts) if is_session_active else []
 
             # ── G. Compute target positions via vol-targeting ────────────────────
             if signals:
@@ -604,10 +647,8 @@ class PortfolioBacktestEngine:
             orders = self._compute_orders(target_list, pending_orders)
             pending_orders.extend(orders)
 
-            # ── I. End-of-day forced close (weekend-safe) ─────────────────────────
-            is_eod = self._is_eod_boundary(current_date, next_date)
-
-            if is_eod and self.settings.eod_close_time:
+            # ── I. Time-based forced EOD close ────────────────────────────────────
+            if self._should_force_eod_close(ts, current_date, eod_close_time):
                 # 1. Execute outstanding pending orders at market-on-close
                 still_pending = []
                 for (slot_id, symbol, side, qty, reason) in pending_orders:
@@ -641,6 +682,7 @@ class PortfolioBacktestEngine:
                         instance._invested = False
                     if hasattr(instance, "_position_side"):
                         instance._position_side = None
+                self._eod_closed_dates.add(current_date)
 
             # ── J. Snapshot ───────────────────────────────────────────────────────
             self.book.record_snapshot(ts, instrument_specs=specs)
