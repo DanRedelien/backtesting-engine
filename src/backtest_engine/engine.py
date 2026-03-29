@@ -349,8 +349,9 @@ class BacktestEngine:
             # Compute spread ticks from history available at this bar (no-lookahead).
             spread_ticks = self._effective_spread_ticks(i, closes)
 
-            is_session_active = self._is_session_active(
-                timestamp,
+            ts_dt = pd.Timestamp(timestamp).to_pydatetime()
+            session_ok = self._is_session_active(
+                ts_dt,
                 trade_start_time=trade_start_time,
                 trade_end_time=trade_end_time,
             )
@@ -358,7 +359,7 @@ class BacktestEngine:
             risk_orders = [o for o in pending_orders if "RISK" in o.reason]
             normal_orders = [o for o in pending_orders if "RISK" not in o.reason]
             orders_to_execute = risk_orders
-            if not self.trading_halted_today and is_session_active:
+            if not self.trading_halted_today and session_ok:
                 orders_to_execute += normal_orders
 
             for order in orders_to_execute:
@@ -369,6 +370,8 @@ class BacktestEngine:
                     self.portfolio.update(fill, current_prices)
 
             pending_orders = []
+            if not self.trading_halted_today and not session_ok:
+                pending_orders.extend(normal_orders)
 
             # B. Mark-to-market + risk checks
             self.portfolio.update(None, current_prices)
@@ -386,13 +389,13 @@ class BacktestEngine:
                 continue
 
             # E. Strategy logic (signal at close of bar t → order fills at open of bar t+1)
-            if is_session_active:
+            if session_ok:
                 new_orders = self.strategy.on_bar(bar)
                 if new_orders:
                     pending_orders.extend(new_orders)
 
             # F. Time-based forced EOD close
-            if self._should_force_eod_close(timestamp, current_date, eod_close_time):
+            if self._should_force_eod_close(ts_dt, current_date, eod_close_time):
                 for order in pending_orders:
                     fill = self.execution.execute_order(
                         order,
