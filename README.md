@@ -1,3 +1,12 @@
+> [!WARNING]
+> **Upcoming Major Engine Refactor** — estimated mid-April (idk when exactly...)
+>
+> The engine will be completely rewritten using **NautilusTrader**, transitioning to a simpler and more reliable backtesting workflow. Key changes include:
+> - **StatArb** and **Same single asset mode** support (portfolio and wfo will be too, don't worry)
+> - **FX/CFD** as the primary asset class (you will be able to add IB API, or I will later add it too)
+> - Full **order type** support
+> - Significantly **faster execution** — courtesy of NautilusTrader's Rust core
+
 # Backtesting Platform
 
 [![CI](https://github.com/DanRedelien/futures-backtesting-engine/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/DanRedelien/futures-backtesting-engine/actions/workflows/ci.yml)
