@@ -1,11 +1,18 @@
 > [!WARNING]
-> **Upcoming Major Engine Refactor** — estimated end of April (idk when exactly...)
+> **Why v1 has slowed down**
 >
-> The engine will be completely rewritten using **NautilusTrader**, transitioning to a simpler and more reliable backtesting workflow. Key changes include:
-> - **StatArb** and **Same single asset mode** support (portfolio and wfo will be too, don't worry)
-> - **FX/CFD** as the primary asset class (you will be able to add IB API, or I will later add it too)
-> - Full **order type** support
-> - Significantly **faster execution** — courtesy of NautilusTrader's Rust core
+> Development is currently focused on **Backtesting Engine v2**, a major upgrade built around **NautilusTrader**.
+> Instead of continuing to patch the old v1 engine, I am rebuilding the backtesting workflow into a cleaner, faster, and more reliable system.
+>
+> The goal for **v2** is:
+> - a much simpler and more consistent backtesting workflow
+> - proper support for **single-asset**, **stat-arb**, and **portfolio** strategies
+> - better handling of **FX/CFD** markets and more realistic execution modeling
+> - broader **order type** support
+> - significantly faster execution thanks to NautilusTrader's Rust-powered core
+>
+> The first public v2 milestone is planned for **around 30 Apr 2026**.  
+> If it slips, it should land **no later than 1-5 May 2026**.
 
 # Backtesting Platform
 
