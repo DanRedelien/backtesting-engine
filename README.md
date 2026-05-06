@@ -1,18 +1,19 @@
-> [!WARNING]
-> **Why v1 has slowed down**
+> [!NOTE]
+> **Project status**
 >
-> Development is currently focused on **Backtesting Engine v2**, a major upgrade built around **NautilusTrader**.
-> Instead of continuing to patch the old v1 engine, I am rebuilding the backtesting workflow into a cleaner, faster, and more reliable system.
+> The `main` branch contains the latest stable v1 release of Backtesting Engine.
 >
-> The goal for **v2** is:
-> - a much simpler and more consistent backtesting workflow
-> - proper support for **single-asset**, **stat-arb**, and **portfolio** strategies
-> - better handling of **FX/CFD** markets and more realistic execution modeling
-> - broader **order type** support
-> - significantly faster execution thanks to NautilusTrader's Rust-powered core
+> Active development is now focused on **Backtesting Engine v2** in the [`v2-alpha`](../../tree/v2-alpha) branch.  
+> v2 is a major upgrade built around **NautilusTrader**, with a cleaner architecture, faster execution, and better support for realistic futures/FX/CFD backtesting.
 >
-> The first public v2 milestone is planned for **around 30 Apr 2026**.  
-> If it slips, it should land **no later than 1-10 May 2026**.
+> Use `main` if you want the last stable v1 version.  
+> Use `v2-alpha` if you want to follow the current v2 alpha work.
+>
+> Current v2 alpha tag:
+>
+> ```bash
+> git checkout v2.0.0-alpha.1
+> ```
 
 # Backtesting Platform
 
