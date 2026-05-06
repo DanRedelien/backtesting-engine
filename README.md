@@ -1,6 +1,6 @@
 # Backtesting Engine
 
-[![CI](https://github.com/DanRedelien/backtesting_engine_v2/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/DanRedelien/backtesting_engine_v2/actions/workflows/ci.yml)
+[![CI](https://github.com/DanRedelien/backtesting-engine/tree/v2-alpha/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/DanRedelien/backtesting-engine/tree/v2-alpha/actions/workflows/ci.yml)
 ![Python](https://img.shields.io/badge/python-3.11%2B-blue)
 
 Research-grade backtesting platform centered on one Nautilus execution
