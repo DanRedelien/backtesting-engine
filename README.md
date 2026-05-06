@@ -77,8 +77,8 @@ The codebase is optimized for research workflows where no-lookahead execution, a
 ## Quick Start
 
 ```bash
-git clone https://github.com/DanRedelien/futures-backtesting-engine.git
-cd futures-backtesting-engine
+git clone https://github.com/DanRedelien/backtesting-engine.git
+cd backtesting-engine
 pip install -r requirements.txt
 pytest tests/
 ```
