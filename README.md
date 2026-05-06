@@ -1,6 +1,6 @@
 # Backtesting Engine
 
-[![CI](https://github.com/DanRedelien/backtesting-engine/tree/v2-alpha/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/DanRedelien/backtesting-engine/tree/v2-alpha/actions/workflows/ci.yml)
+[![CI](https://github.com/DanRedelien/backtesting-engine/actions/workflows/ci.yml/badge.svg?branch=v2-alpha)](https://github.com/DanRedelien/backtesting-engine/actions/workflows/ci.yml?query=branch%3Av2-alpha)
 ![Python](https://img.shields.io/badge/python-3.11%2B-blue)
 
 Research-grade backtesting platform centered on one Nautilus execution
@@ -46,9 +46,11 @@ Operator command examples live in `USAGE/README.md`.
 
 ## Quick Start
 
+Latest v2 alpha branch:
+
 ```bash
-git clone https://github.com/DanRedelien/backtesting_engine_v2.git
-cd backtesting_engine_v2
+git clone -b v2-alpha https://github.com/DanRedelien/backtesting-engine.git
+cd backtesting-engine
 python -m pip install -r requirements.txt
 pytest -q
 ```
