@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="dashboard-frame">
+    <header class="dashboard-topbar">
+        <div class="dashboard-title">
+            <span>Saved Bundle Dashboard</span>
+            {% if page.selected_bundle %}
+            <strong>{{ page.selected_bundle.view.summary.bundle_id }}</strong>
+            {% else %}
+            <strong>No loadable bundle</strong>
+            {% endif %}
+        </div>
+        <nav class="bundle-nav" aria-label="Saved bundles">
+            {% for bundle in page.catalog.bundles %}
+            <a
+                class="bundle-nav__link{% if page.requested_bundle_id == bundle.bundle_id %} bundle-nav__link--active{% endif %}"
+                href="/bundles/{{ bundle.bundle_id }}"
+                title="{{ bundle.bundle_id }}"
+            >
+                {{ bundle.created_at_utc.strftime("%m-%d %H:%M") }} {{ bundle.run_kind.value }}
+            </a>
+            {% endfor %}
+        </nav>
+    </header>
+
+    {% if page.error_message or page.catalog.load_failures %}
+    <div class="dashboard-notice" role="status">
+        {% if page.error_message %}
+        <span>{{ page.error_message }}</span>
+        {% endif %}
+        {% if page.catalog.load_failures %}
+        <span>{{ page.catalog.load_failures | length }} invalid bundle(s) skipped.</span>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <main class="dashboard-grid" aria-label="Saved bundle dashboard panels">
+        <section class="dashboard-panel dashboard-panel--stats" data-panel="stats">
+            <div class="panel-heading">
+                <p>Stats</p>
+                <h2>Core metrics</h2>
+            </div>
+            {% if page.selected_bundle %}
+            <dl class="stats-list">
+                {% for item in page.selected_bundle.dashboard.stats.items %}
+                <div>
+                    <dt>{{ item.label }}</dt>
+                    <dd title="{{ item.empty_reason }}">{{ item.display_value }}</dd>
+                </div>
+                {% endfor %}
+            </dl>
+            {% if page.selected_bundle.dashboard.stats.warnings %}
+            <div class="panel-note">
+                {% for warning in page.selected_bundle.dashboard.stats.warnings %}
+                <p>{{ warning }}</p>
+                {% endfor %}
+            </div>
+            {% endif %}
+            {% else %}
+            <div class="panel-empty">
+                <strong>No bundle selected</strong>
+                <span>Run a backtest and reload the dashboard.</span>
+            </div>
+            {% endif %}
+        </section>
+
+        <section class="dashboard-panel dashboard-panel--heatmap viz-panel" data-panel="strategy-correlation">
+            <div class="panel-heading">
+                <p>Strategy correlation</p>
+                {% if page.selected_bundle %}
+                <h2>{{ page.selected_bundle.dashboard.heatmap.metric_label }}</h2>
+                {% else %}
+                <h2>Unavailable</h2>
+                {% endif %}
+            </div>
+            {% if page.selected_bundle and page.selected_bundle.dashboard.heatmap.status == "available" %}
+            <svg class="chart-surface" data-chart="heatmap" role="img" aria-label="Strategy correlation heatmap"></svg>
+            {% else %}
+            <div class="panel-empty">
+                <strong>No strategy matrix</strong>
+                {% if page.selected_bundle %}
+                <span>{{ page.selected_bundle.dashboard.heatmap.reason }}</span>
+                {% else %}
+                <span>No saved bundle is selected.</span>
+                {% endif %}
+            </div>
+            {% endif %}
+        </section>
+
+        <section class="dashboard-panel dashboard-panel--equity viz-panel" data-panel="equity">
+            <div class="panel-heading">
+                <p>Equity</p>
+                <h2>Closed-position equity</h2>
+            </div>
+            {% if page.selected_bundle and page.selected_bundle.dashboard.equity.status == "available" %}
+            <svg class="chart-surface" data-chart="equity" role="img" aria-label="Combined, long, and short closed-position equity curves"></svg>
+            {% else %}
+            <div class="panel-empty">
+                <strong>No equity curve</strong>
+                {% if page.selected_bundle %}
+                <span>{{ page.selected_bundle.dashboard.equity.reason }}</span>
+                {% else %}
+                <span>No saved bundle is selected.</span>
+                {% endif %}
+            </div>
+            {% endif %}
+        </section>
+
+        <section class="dashboard-panel dashboard-panel--drawdown viz-panel" data-panel="drawdown">
+            <div class="panel-heading">
+                <p>Drawdown</p>
+                <h2>Relative drawdown</h2>
+            </div>
+            {% if page.selected_bundle and page.selected_bundle.dashboard.drawdown.status == "available" %}
+            <svg class="chart-surface" data-chart="drawdown" role="img" aria-label="Relative drawdown curve"></svg>
+            {% else %}
+            <div class="panel-empty">
+                <strong>No drawdown curve</strong>
+                {% if page.selected_bundle %}
+                <span>{{ page.selected_bundle.dashboard.drawdown.reason }}</span>
+                {% else %}
+                <span>No saved bundle is selected.</span>
+                {% endif %}
+            </div>
+            {% endif %}
+        </section>
+    </main>
+</div>
+
+<script id="dashboard-data" type="application/json">
+{% if page.selected_bundle %}
+{{ page.selected_bundle.dashboard.model_dump(mode="json") | tojson }}
+{% else %}
+null
+{% endif %}
+</script>
+{% endblock %}

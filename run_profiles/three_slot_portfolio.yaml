@@ -1,0 +1,79 @@
+run_kind: portfolio
+execution_window:
+  start_utc: "2024-01-01T00:00:00Z"
+  end_utc: "2024-03-01T00:00:00Z"
+dataset:
+  source_system: mt5
+  normalization_policy: nautilus_v1
+  schema_version: "1"
+  symbol_universe:
+    - EURUSD
+    - GBPUSD
+  timeframe: 15m
+  dataset_version: "2026-04-19"
+capital_base:
+  amount: "250000"
+  currency: USD
+portfolio_policy:
+  rebalance_cadence: run_open
+  target_portfolio_vol_frac: 1.0
+  vol_lookback_bars: 20
+  max_portfolio_leverage: 1.0
+  estimator_version: rolling_sample_v1
+  annualization_policy: 252d
+  warmup_policy: hold_flat_until_lookback
+strategies:
+  - slot_id: eurusd_sma_pullback
+    weight_frac: 0.4
+    strategy_id: eurusd_sma_pullback_v1
+    implementation_id: sma_pullback
+    policy_version: v1
+    legs:
+      - EURUSD
+    parameters:
+      fast_sma_window: 50
+      slow_sma_window: 200
+      atr_window: 14
+      atr_sl_mult: 2.0
+      rr_ratio: 3.0
+      trade_direction: both
+  - slot_id: gbpusd_channel_breakout
+    weight_frac: 0.3
+    strategy_id: gbpusd_channel_breakout_v1
+    implementation_id: channel_breakout_long
+    policy_version: v1
+    legs:
+      - GBPUSD
+    parameters:
+      length: 50
+      ema_period: 200
+      entry_buffer_ticks: 1
+      trade_direction: long
+      use_shock_filter: true
+      shock_atr_window: 14
+      shock_max_gap_atr: 1.25
+      shock_max_range_atr: 3.0
+      shock_max_close_change_atr: 2.0
+  - slot_id: eurusd_gbpusd_spread
+    weight_frac: 0.3
+    strategy_id: eurusd_gbpusd_spread_v1
+    implementation_id: statarb_weighted_spread
+    policy_version: v1
+    legs:
+      - EURUSD
+      - GBPUSD
+    parameters:
+      trade_sizes:
+        - 1.0
+        - 1.0
+      spread_weights:
+        - 1.0
+        - -1.0
+      zscore_window: 120
+      entry_zscore: 2.0
+      exit_zscore: 0.5
+      trade_direction: both
+tags:
+  - example
+  - fx
+  - portfolio

@@ -1,0 +1,97 @@
+schema_version: 1
+profile_id: default_execution_costs
+owner: rewrite_v2
+description: >
+  Execution-cost assumptions for deterministic commission, spread, and slippage previews.
+  Instrument identity, precision, lot-size, and multiplier metadata remain in
+  nautilus_symbol_map.yaml.
+
+asset_class_defaults:
+  FX:
+    commission_model:
+      model: rate_of_notional
+      commission_rate_bps: "0.20"
+    spread_model:
+      model: static_half_spread_ticks
+      half_spread_ticks: "5"
+    slippage_model:
+      model: fixed_ticks
+      slippage_ticks: "1"
+  INDEX:
+    commission_model:
+      model: rate_of_notional
+      commission_rate_bps: "0.40"
+    spread_model:
+      model: buffered_static_spread
+      base_half_spread_price: "0.25"
+      buffer_multiplier: "1.20"
+    slippage_model:
+      model: bps_of_price
+      slippage_bps: "0.50"
+  COMMODITY:
+    commission_model:
+      model: rate_of_notional
+      commission_rate_bps: "0.80"
+    spread_model:
+      model: static_half_spread_price
+      half_spread_price: "0.15"
+    slippage_model:
+      model: fixed_ticks
+      slippage_ticks: "2"
+  CRYPTOCURRENCY:
+    commission_model:
+      model: rate_of_notional
+      commission_rate_bps: "7.50"
+    spread_model:
+      model: buffered_static_spread
+      base_half_spread_price: "15.00"
+      buffer_multiplier: "1.50"
+    slippage_model:
+      model: bps_of_price
+      slippage_bps: "2.00"
+
+symbol_overrides:
+  ES:
+    commission_model:
+      model: fixed_per_contract
+      amount_per_contract: "2.25"
+      currency: USD
+    spread_model:
+      model: static_half_spread_ticks
+      half_spread_ticks: "0.5"
+    slippage_model:
+      model: fixed_ticks
+      slippage_ticks: "1"
+  NQ:
+    commission_model:
+      model: fixed_per_contract
+      amount_per_contract: "2.25"
+      currency: USD
+    spread_model:
+      model: static_half_spread_ticks
+      half_spread_ticks: "0.5"
+    slippage_model:
+      model: fixed_ticks
+      slippage_ticks: "1"
+  YM:
+    commission_model:
+      model: fixed_per_contract
+      amount_per_contract: "2.25"
+      currency: USD
+    spread_model:
+      model: static_half_spread_ticks
+      half_spread_ticks: "0.5"
+    slippage_model:
+      model: fixed_ticks
+      slippage_ticks: "1"
+  RTY:
+    commission_model:
+      model: fixed_per_contract
+      amount_per_contract: "2.25"
+      currency: USD
+    spread_model:
+      model: static_half_spread_ticks
+      half_spread_ticks: "0.5"
+    slippage_model:
+      model: fixed_ticks
+      slippage_ticks: "1"

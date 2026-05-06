@@ -1,0 +1,463 @@
+{
+  "$defs": {
+    "BacktestExecutionPolicy": {
+      "additionalProperties": false,
+      "description": "Declarative execution-realism intent captured by the canonical run spec.",
+      "properties": {
+        "execution_costs": {
+          "$ref": "#/$defs/ExecutionCostProfileRef"
+        },
+        "venue_overrides": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ExecutionVenueOverrides"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "execution_costs"
+      ],
+      "title": "BacktestExecutionPolicy",
+      "type": "object"
+    },
+    "DatasetSource": {
+      "enum": [
+        "ib",
+        "mt5",
+        "parquet",
+        "synthetic"
+      ],
+      "title": "DatasetSource",
+      "type": "string"
+    },
+    "ExecutionCostProfileRef": {
+      "additionalProperties": false,
+      "description": "Declarative reference to an execution-cost assumption profile.",
+      "properties": {
+        "config_content_hash": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Config Content Hash"
+        },
+        "profile_id": {
+          "minLength": 1,
+          "title": "Profile Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "profile_id"
+      ],
+      "title": "ExecutionCostProfileRef",
+      "type": "object"
+    },
+    "ExecutionVenueOverrides": {
+      "additionalProperties": false,
+      "description": "Optional declarative venue defaults to apply in a later compiler phase.",
+      "properties": {
+        "account_type": {
+          "anyOf": [
+            {
+              "enum": [
+                "CASH",
+                "MARGIN",
+                "BETTING"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Account Type"
+        },
+        "book_type": {
+          "anyOf": [
+            {
+              "enum": [
+                "L1_MBP",
+                "L2_MBP",
+                "L3_MBO"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Book Type"
+        },
+        "oms_type": {
+          "anyOf": [
+            {
+              "enum": [
+                "NETTING",
+                "HEDGING"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Oms Type"
+        }
+      },
+      "title": "ExecutionVenueOverrides",
+      "type": "object"
+    },
+    "JsonValue": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "integer"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "items": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "type": "array"
+        },
+        {
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "Money": {
+      "additionalProperties": false,
+      "description": "An immutable money value used at stable boundaries.",
+      "properties": {
+        "amount": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Amount"
+        },
+        "currency": {
+          "maxLength": 3,
+          "minLength": 3,
+          "title": "Currency",
+          "type": "string"
+        }
+      },
+      "required": [
+        "amount",
+        "currency"
+      ],
+      "title": "Money",
+      "type": "object"
+    },
+    "PortfolioExecutionPolicy": {
+      "additionalProperties": false,
+      "description": "Execution-defining portfolio policy owned by the run spec.",
+      "properties": {
+        "annualization_policy": {
+          "default": "252d",
+          "minLength": 1,
+          "title": "Annualization Policy",
+          "type": "string"
+        },
+        "estimator_version": {
+          "default": "rolling_sample_v1",
+          "minLength": 1,
+          "title": "Estimator Version",
+          "type": "string"
+        },
+        "max_portfolio_leverage": {
+          "default": 1.0,
+          "exclusiveMinimum": 0.0,
+          "title": "Max Portfolio Leverage",
+          "type": "number"
+        },
+        "rebalance_cadence": {
+          "default": "run_open",
+          "minLength": 1,
+          "title": "Rebalance Cadence",
+          "type": "string"
+        },
+        "target_portfolio_vol_frac": {
+          "default": 1.0,
+          "exclusiveMinimum": 0.0,
+          "maximum": 1.0,
+          "title": "Target Portfolio Vol Frac",
+          "type": "number"
+        },
+        "vol_lookback_bars": {
+          "default": 20,
+          "minimum": 2,
+          "title": "Vol Lookback Bars",
+          "type": "integer"
+        },
+        "warmup_policy": {
+          "$ref": "#/$defs/WarmupPolicy",
+          "default": "hold_flat_until_lookback"
+        }
+      },
+      "title": "PortfolioExecutionPolicy",
+      "type": "object"
+    },
+    "RunKind": {
+      "enum": [
+        "single",
+        "portfolio",
+        "batch",
+        "walk_forward",
+        "scenario",
+        "baseline"
+      ],
+      "title": "RunKind",
+      "type": "string"
+    },
+    "RunProfileDataset": {
+      "additionalProperties": false,
+      "description": "Operator-facing dataset identity for a run profile.",
+      "properties": {
+        "dataset_version": {
+          "minLength": 1,
+          "title": "Dataset Version",
+          "type": "string"
+        },
+        "normalization_policy": {
+          "minLength": 1,
+          "title": "Normalization Policy",
+          "type": "string"
+        },
+        "schema_version": {
+          "minLength": 1,
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "source_system": {
+          "$ref": "#/$defs/DatasetSource"
+        },
+        "symbol_universe": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Symbol Universe",
+          "type": "array"
+        },
+        "timeframe": {
+          "minLength": 1,
+          "title": "Timeframe",
+          "type": "string"
+        }
+      },
+      "required": [
+        "source_system",
+        "normalization_policy",
+        "schema_version",
+        "symbol_universe",
+        "timeframe",
+        "dataset_version"
+      ],
+      "title": "RunProfileDataset",
+      "type": "object"
+    },
+    "RunProfileExecutionWindow": {
+      "additionalProperties": false,
+      "description": "Operator-facing execution window for a run profile.",
+      "properties": {
+        "end_utc": {
+          "format": "date-time",
+          "title": "End Utc",
+          "type": "string"
+        },
+        "start_utc": {
+          "format": "date-time",
+          "title": "Start Utc",
+          "type": "string"
+        }
+      },
+      "required": [
+        "start_utc",
+        "end_utc"
+      ],
+      "title": "RunProfileExecutionWindow",
+      "type": "object"
+    },
+    "RunProfileStrategySlot": {
+      "additionalProperties": false,
+      "description": "One operator-facing strategy slot in a run profile.",
+      "properties": {
+        "implementation_id": {
+          "minLength": 1,
+          "title": "Implementation Id",
+          "type": "string"
+        },
+        "legs": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Legs",
+          "type": "array"
+        },
+        "parameters": {
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "title": "Parameters",
+          "type": "object"
+        },
+        "policy_version": {
+          "default": "v1",
+          "minLength": 1,
+          "title": "Policy Version",
+          "type": "string"
+        },
+        "slot_id": {
+          "minLength": 1,
+          "title": "Slot Id",
+          "type": "string"
+        },
+        "strategy_id": {
+          "minLength": 1,
+          "title": "Strategy Id",
+          "type": "string"
+        },
+        "weight_frac": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Weight Frac",
+          "type": "number"
+        }
+      },
+      "required": [
+        "slot_id",
+        "weight_frac",
+        "strategy_id",
+        "implementation_id",
+        "legs"
+      ],
+      "title": "RunProfileStrategySlot",
+      "type": "object"
+    },
+    "RuntimeBoundary": {
+      "enum": [
+        "nautilus"
+      ],
+      "title": "RuntimeBoundary",
+      "type": "string"
+    },
+    "WarmupPolicy": {
+      "enum": [
+        "hold_flat_until_lookback"
+      ],
+      "title": "WarmupPolicy",
+      "type": "string"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Operator-facing launch profile translated into ``BacktestRunSpec``.",
+  "properties": {
+    "capital_base": {
+      "$ref": "#/$defs/Money"
+    },
+    "dataset": {
+      "$ref": "#/$defs/RunProfileDataset"
+    },
+    "execution_policy": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/BacktestExecutionPolicy"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "execution_window": {
+      "$ref": "#/$defs/RunProfileExecutionWindow"
+    },
+    "portfolio_policy": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/PortfolioExecutionPolicy"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "run_kind": {
+      "$ref": "#/$defs/RunKind"
+    },
+    "runtime_boundary": {
+      "$ref": "#/$defs/RuntimeBoundary",
+      "default": "nautilus"
+    },
+    "semantic_policy_version": {
+      "default": "v1",
+      "minLength": 1,
+      "title": "Semantic Policy Version",
+      "type": "string"
+    },
+    "strategies": {
+      "items": {
+        "$ref": "#/$defs/RunProfileStrategySlot"
+      },
+      "minItems": 1,
+      "title": "Strategies",
+      "type": "array"
+    },
+    "tags": {
+      "items": {
+        "minLength": 1,
+        "type": "string"
+      },
+      "title": "Tags",
+      "type": "array"
+    }
+  },
+  "required": [
+    "run_kind",
+    "execution_window",
+    "dataset",
+    "capital_base",
+    "strategies"
+  ],
+  "title": "RunProfile",
+  "type": "object"
+}

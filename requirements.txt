@@ -1,0 +1,36 @@
+# One-command repository bootstrap:
+#   python -m pip install -r requirements.txt
+#
+# This file pins the repository's direct dependency surface for runtime flows,
+# tests, the terminal UI, and optional provider adapters exposed by the repo.
+
+-e .
+
+# Core runtime
+fastapi==0.120.4
+Jinja2==3.1.6
+matplotlib==3.10.7
+nautilus-trader==1.221.0
+pandas==2.3.3
+pydantic==2.12.5
+pydantic-settings==2.12.0
+pyarrow==23.0.0
+PyYAML==6.0.3
+
+# Delivery and test surface
+httpx==0.28.1
+uvicorn==0.35.0
+
+# Development tooling
+basedpyright==1.39.2
+import-linter==2.11
+mypy==1.20.0
+pandas-stubs==2.3.2.250926
+pytest==9.0.2
+ruff==0.13.3
+types-PyYAML==6.0.12.20250915
+
+# Optional adapters and optimization runtime
+ib-insync==0.9.86
+optuna==4.7.0
+MetaTrader5==5.0.5640 ; platform_system == "Windows"

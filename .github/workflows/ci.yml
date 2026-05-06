@@ -1,0 +1,85 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Upgrade pip
+        run: python -m pip install --upgrade pip
+
+      - name: Install project
+        run: python -m pip install -r requirements.txt
+
+      - name: Ruff
+        run: ruff check .
+
+      - name: MyPy
+        run: mypy src tests
+
+      - name: Sakura
+        run: |
+          p=$'\033[95m'
+          P=$'\033[35m'
+          w=$'\033[97m'
+          r=$'\033[0m'
+          printf '%b\n' \
+            "${p}                            .                     .                             ${r}" \
+            "${p}       .   *        .  *        *   .                ф         .               ${r}" \
+            "${p}              .            .     .     .     *     ${P}(*)$  *       .               ${r}" \
+            "${p}       .  *      . ${P}(*)$    .       .       *    ${P}(*)$   .       *          ${r}" \
+            "${p}             .      *  ${P}(*)$           .    .  ${P}(*)$        .                    ${r}" \
+            "${p}        *   .  ${P}(n)(*)(*)(*)${p}  .   *   ${P}(*)${p}.${r}" \
+            "${p}    .  * ${P}(*)(w)(*)(*)(*)(*)${p} *  .  * ${P}(*)(*)(*)${p} *  .${r}" \
+            "${p}  *  . ${P}(*)(*)(*)(*)(*)(c)(*)(*)(*)${p} .  . ${P}(*)(*)(*)(*)(*)${p} .  *${r}" \
+            "${p}   . ${P}(*)(*g)(*g)(*)(*)(*)(*)(*)(*)(*)(*)(*)(*)(*)(*)(*)${p}.${r}" \
+            "${p} *  . ${P}(*)(*)(*)(*)(*)(*)(*)(*)(*)(*)(*)(*)(*)(*)(*)(*)${p}. *${r}" \
+            "${p}    * . ${P}(l)(o)(l)(*)(*)(z)(*)(*)(o)(*)(*)(i)(*)(*)${p} . *${r}" \
+            "${p}  .   * . ${P}(h)(*)(*)(*)(*)(*)(*)(*)(*)(*)(*)(*)(*)${p} *  .${r}" \
+            "${p}       .  ${P}(*)(j)(*)(*)(*)(*)(*)(*)(*)(x)(*)(*)${p}  .${r}" \
+            "${p}    *    . ${P}(*)(k)(*)(*)(*)(a)(*)(*)(*)(*)(*)${p} .   *${r}" \
+            "${p} .        . ${P}(q)(*)(*)(*)(*)(*)(*)(p)(*)(*)${p} .${r}" \
+            "${p}  .   *          ${P}(*)(*)$   ${w}| p |${r}  ${P}(*)${r}" \
+            "${p}        .         ${P}(*)$     ${w}| y |${r}" \
+            "${w}                        V /L   |\\ ${r}" \
+            "${w}                         V | r I \\ ${r}" \
+            "${w}                        /__|U__|__X\\ ${r}"
+
+      - name: Import Linter
+        run: |
+          python - <<'PY'
+          import subprocess
+          import sys
+
+          proc = subprocess.run(
+              ["lint-imports", "--config", ".importlinter"],
+              capture_output=True,
+              text=True,
+          )
+          output = proc.stdout + proc.stderr
+
+          for raw_line in output.splitlines():
+              cleaned = "".join(ch for ch in raw_line if ord(ch) < 128)
+              if not cleaned.strip():
+                  continue
+              if cleaned.strip() in {"_", "|", "/ \\", "/|   |\\", "/ |   | \\", "/__|___|__\\"}:
+                  continue
+              print(cleaned)
+
+          sys.exit(proc.returncode)
+          PY
+
+      - name: Pytest
+        run: pytest -q

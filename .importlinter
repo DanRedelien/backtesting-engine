@@ -1,0 +1,26 @@
+[importlinter]
+root_package = backtest_engine
+
+[importlinter:contract:layer_direction]
+name = Enforce layer direction
+type = layers
+layers =
+    backtest_engine.interfaces
+    backtest_engine.bootstrap
+    backtest_engine.application
+    backtest_engine.infrastructure
+    backtest_engine.strategies
+    backtest_engine.domain
+    backtest_engine.core
+
+[importlinter:contract:forbid_removed_paths]
+name = Forbid removed runtime packages
+type = forbidden
+source_modules =
+    backtest_engine
+forbidden_modules =
+    backtest_engine.single_asset
+    backtest_engine.portfolio_layer
+    backtest_engine.services
+    backtest_engine.runtime
+    backtest_engine.nautilus_layer

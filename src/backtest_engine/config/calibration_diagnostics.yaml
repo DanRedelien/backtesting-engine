@@ -1,0 +1,53 @@
+schema_version: 1
+policy_name: spread_calibration_internal_heuristics_v1
+policy_description: >
+  Report-only internal heuristics for offline spread calibration review.
+  These thresholds are not statistical tests and never block publication.
+threshold_interpretation: >
+  Log-bias thresholds are multiplicative: alpha=0.05 is approximately
+  exp(0.05)-1, or 5.1 percent. Yellow warnings and red review flags are
+  deterministic audit aids only.
+threshold_status_levels:
+  - warning
+  - review_flag
+thresholds:
+  absolute_mean_log_error_warning: 0.05
+  absolute_mean_log_error_review: 0.10
+  mae_log_warning: 0.05
+  mae_log_review: 0.10
+  rmse_log_warning: 0.075
+  rmse_log_review: 0.15
+  severe_underpricing_rate_1_5x_warning: 0.05
+  severe_underpricing_rate_1_5x_review: 0.10
+  severe_underpricing_rate_2_0x_warning: 0.01
+  severe_underpricing_rate_2_0x_review: 0.05
+  min_clip_rate_warning: 0.20
+  min_clip_rate_review: 0.40
+  max_clip_rate_warning: 0.20
+  max_clip_rate_review: 0.40
+  target_floor_rate_warning: 0.20
+  target_floor_rate_review: 0.40
+  baseline_mae_degradation_warning: 0.02
+  baseline_mae_degradation_review: 0.05
+palette:
+  paper: "#fbfaf7"
+  panel: "#fffefd"
+  ink: "#202124"
+  muted: "#686f76"
+  line: "#d8d3c8"
+  accent: "#205c73"
+  negative: "#a1462f"
+  amber: "#b7791f"
+plot:
+  backend: Agg
+  dpi: 140
+  summary_width_inches: 11.0
+  summary_height_inches: 6.5
+  symbol_width_inches: 12.0
+  symbol_height_inches: 9.0
+decile_count: 10
+regime_bucket_labels:
+  - low
+  - mid
+  - high
+minimum_regression_rows: 2

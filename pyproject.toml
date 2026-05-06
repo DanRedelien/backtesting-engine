@@ -1,0 +1,100 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "backtesting-engine-v2"
+version = "0.50.0a1"
+description = "Clean-room rewrite of the backtesting platform around one Nautilus runtime boundary."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.116.0",
+    "Jinja2>=3.1.6",
+    "matplotlib>=3.9.0",
+    "nautilus-trader>=1.221.0",
+    "pandas>=2.3.0",
+    "pydantic>=2.12.0",
+    "pydantic-settings>=2.0.0",
+    "pyarrow>=23.0.0",
+    "PyYAML>=6.0.0",
+    "typing_extensions>=4.12.0",
+]
+
+[project.scripts]
+bte-backtest = "backtest_engine.interfaces.cli.backtest.__main__:main"
+
+[project.optional-dependencies]
+dev = [
+    "basedpyright>=1.39.2",
+    "import-linter>=2.0",
+    "mypy>=1.20.0",
+    "pandas-stubs>=2.3.2.250926",
+    "pytest>=9.0.0",
+    "ruff>=0.13.3",
+    "types-PyYAML>=6.0.12",
+]
+ib = [
+    "ib-insync>=0.9.86",
+]
+mt5 = [
+    "MetaTrader5>=5.0.45",
+]
+optuna = [
+    "optuna>=4.3.0",
+]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"backtest_engine.config" = ["*.yaml"]
+"backtest_engine.interfaces.terminal_ui" = ["templates/*.html", "static/*.css", "static/*.js"]
+
+[tool.pytest.ini_options]
+pythonpath = [".", "src"]
+testpaths = ["tests", "src/backtest_engine/strategies"]
+markers = [
+    "integration: tests that launch external runtimes or exercise end-to-end wiring",
+    "slow: tests that are intentionally outside the fast unit-test path",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+packages = ["backtest_engine"]
+plugins = ["pydantic.mypy"]
+
+[[tool.mypy.overrides]]
+module = [
+    "MetaTrader5",
+    "nautilus_trader.*",
+]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = [
+    "backtest_engine.infrastructure.nautilus.catalogs",
+    "backtest_engine.infrastructure.nautilus.reports",
+    "backtest_engine.infrastructure.nautilus.runner",
+]
+disable_error_code = ["attr-defined", "misc", "no-untyped-call", "no-untyped-def", "union-attr"]
+
+[[tool.mypy.overrides]]
+module = [
+    "backtest_engine.infrastructure.nautilus.execution_models",
+]
+disable_error_code = ["misc"]
+
+[[tool.mypy.overrides]]
+module = [
+    "backtest_engine.strategies.*.nautilus_strategy",
+]
+disable_error_code = ["misc"]

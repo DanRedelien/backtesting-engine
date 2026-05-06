@@ -1,0 +1,266 @@
+schema_version: 2
+owner: rewrite_v2
+description: >
+  Canonical symbol to Nautilus instrument mapping for the V2 rewrite.
+  Execution-facing adapters must load this file instead of reconstructing
+  venue, precision, or contract metadata ad hoc.
+
+defaults:
+  source_system: PARQUET
+  nautilus_venue: SIM
+  timezone: UTC
+  aggregation_source: EXTERNAL
+  data_kind: bars
+
+mappings:
+  - mt5_symbol: EURUSD
+    aliases:
+      - EURUSD
+      - EURUSDm
+      - EURUSD.r
+    nautilus_symbol: EUR/USD
+    nautilus_instrument_id: EUR/USD.SIM
+    instrument_type: CURRENCY_PAIR
+    venue: SIM
+    asset_class: FX
+    base_currency: EUR
+    quote_currency: USD
+    price_precision: 5
+    size_precision: 2
+    tick_size: 0.00001
+    point_size: 0.00001
+    size_increment: 0.01
+    lot_size: 100000
+    multiplier: 1
+    margin_init: 0.03
+    margin_maint: 0.03
+    maker_fee: 0.00002
+    taker_fee: 0.00002
+  - mt5_symbol: USDJPY
+    aliases:
+      - USDJPY
+      - USDJPYm
+      - USDJPY.a
+    nautilus_symbol: USD/JPY
+    nautilus_instrument_id: USD/JPY.SIM
+    instrument_type: CURRENCY_PAIR
+    venue: SIM
+    asset_class: FX
+    base_currency: USD
+    quote_currency: JPY
+    price_precision: 3
+    size_precision: 2
+    tick_size: 0.001
+    point_size: 0.001
+    size_increment: 0.01
+    lot_size: 100000
+    multiplier: 1
+    margin_init: 0.03
+    margin_maint: 0.03
+    maker_fee: 0.00002
+    taker_fee: 0.00002
+  - mt5_symbol: GBPUSD
+    aliases:
+      - GBPUSD
+      - GBPUSDm
+      - GBPUSD.r
+    nautilus_symbol: GBP/USD
+    nautilus_instrument_id: GBP/USD.SIM
+    instrument_type: CURRENCY_PAIR
+    venue: SIM
+    asset_class: FX
+    base_currency: GBP
+    quote_currency: USD
+    price_precision: 5
+    size_precision: 2
+    tick_size: 0.00001
+    point_size: 0.00001
+    size_increment: 0.01
+    lot_size: 100000
+    multiplier: 1
+    margin_init: 0.03
+    margin_maint: 0.03
+    maker_fee: 0.00002
+    taker_fee: 0.00002
+  - mt5_symbol: XAUUSD
+    aliases:
+      - XAUUSD
+      - XAUUSDm
+      - GOLD
+    nautilus_symbol: XAU/USD
+    nautilus_instrument_id: XAU/USD.SIM
+    instrument_type: CFD
+    venue: SIM
+    asset_class: COMMODITY
+    base_currency: XAU
+    quote_currency: USD
+    price_precision: 2
+    size_precision: 2
+    tick_size: 0.01
+    point_size: 0.01
+    size_increment: 0.01
+    lot_size: 100
+    margin_init: 0.05
+    margin_maint: 0.05
+  - mt5_symbol: US500
+    aliases:
+      - US500
+      - US500.cash
+      - SPX500
+    nautilus_symbol: US500
+    nautilus_instrument_id: US500.SIM
+    instrument_type: CFD
+    venue: SIM
+    asset_class: INDEX
+    base_currency: USD
+    quote_currency: USD
+    price_precision: 2
+    size_precision: 2
+    tick_size: 0.01
+    point_size: 0.01
+    size_increment: 0.01
+    lot_size: 1
+    margin_init: 0.05
+    margin_maint: 0.05
+  - mt5_symbol: BTCUSD
+    aliases:
+      - BTCUSD
+      - BTCUSDm
+      - BTCUSD.a
+    nautilus_symbol: BTC/USD
+    nautilus_instrument_id: BTC/USD.SIM
+    instrument_type: CFD
+    venue: SIM
+    asset_class: CRYPTOCURRENCY
+    base_currency: BTC
+    quote_currency: USD
+    price_precision: 2
+    size_precision: 2
+    tick_size: 0.01
+    point_size: 0.01
+    size_increment: 0.01
+    lot_size: 1
+    margin_init: 0.20
+    margin_maint: 0.20
+  - mt5_symbol: ES
+    aliases:
+      - ES
+      - ESM4
+      - ESH4
+      - ESU4
+      - ESZ4
+      - ESH5
+      - ESM5
+      - ESU5
+      - ESZ5
+      - ESH6
+      - ESM6
+    nautilus_symbol: ES
+    nautilus_instrument_id: ES.CME
+    instrument_type: FUTURES
+    venue: CME
+    asset_class: INDEX
+    quote_currency: USD
+    price_precision: 2
+    size_precision: 0
+    tick_size: 0.25
+    point_size: 0.25
+    size_increment: 1
+    lot_size: 1
+    multiplier: 50
+    underlying: ES
+    exchange: XCME
+    activation_time_utc: 2024-01-01T00:00:00Z
+    expiration_time_utc: 2027-01-01T00:00:00Z
+    margin_init: 0.10
+    margin_maint: 0.10
+  - mt5_symbol: NQ
+    aliases:
+      - NQ
+      - NQM4
+      - NQH4
+      - NQU4
+      - NQZ4
+      - NQH5
+      - NQM5
+      - NQU5
+      - NQZ5
+      - NQH6
+      - NQM6
+    nautilus_symbol: NQ
+    nautilus_instrument_id: NQ.CME
+    instrument_type: FUTURES
+    venue: CME
+    asset_class: INDEX
+    quote_currency: USD
+    price_precision: 2
+    size_precision: 0
+    tick_size: 0.25
+    point_size: 0.25
+    size_increment: 1
+    lot_size: 1
+    multiplier: 20
+    underlying: NQ
+    exchange: XCME
+    activation_time_utc: 2024-01-01T00:00:00Z
+    expiration_time_utc: 2027-01-01T00:00:00Z
+    margin_init: 0.10
+    margin_maint: 0.10
+  - mt5_symbol: YM
+    aliases:
+      - YM
+      - YMM4
+      - YMH4
+      - YMU4
+      - YMZ4
+      - YMH5
+      - YMM5
+      - YMU5
+    nautilus_symbol: YM
+    nautilus_instrument_id: YM.CBOT
+    instrument_type: FUTURES
+    venue: CBOT
+    asset_class: INDEX
+    quote_currency: USD
+    price_precision: 0
+    size_precision: 0
+    tick_size: 1
+    point_size: 1
+    size_increment: 1
+    lot_size: 1
+    multiplier: 5
+    underlying: YM
+    exchange: XCBT
+    activation_time_utc: 2024-01-01T00:00:00Z
+    expiration_time_utc: 2027-01-01T00:00:00Z
+    margin_init: 0.10
+    margin_maint: 0.10
+  - mt5_symbol: RTY
+    aliases:
+      - RTY
+      - RTYM4
+      - RTYH4
+      - RTYU4
+      - RTYZ4
+      - RTYH5
+      - RTYM5
+      - RTYU5
+    nautilus_symbol: RTY
+    nautilus_instrument_id: RTY.CME
+    instrument_type: FUTURES
+    venue: CME
+    asset_class: INDEX
+    quote_currency: USD
+    price_precision: 1
+    size_precision: 0
+    tick_size: 0.1
+    point_size: 0.1
+    size_increment: 1
+    lot_size: 1
+    multiplier: 50
+    underlying: RTY
+    exchange: XCME
+    activation_time_utc: 2024-01-01T00:00:00Z
+    expiration_time_utc: 2027-01-01T00:00:00Z
+    margin_init: 0.10
+    margin_maint: 0.10
