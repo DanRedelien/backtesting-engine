@@ -5,6 +5,7 @@
 >
 > Active development is now focused on **Backtesting Engine v2** in the [`v2-alpha`](../../tree/v2-alpha) branch.  
 > v2 is a major upgrade built around **NautilusTrader**, with a cleaner architecture, faster execution, and better support for realistic futures/FX/CFD backtesting.
+>
 > The development will be renewed toward the end of 2026.
 > 
 > Use `main` if you want the last stable v1 version.  
